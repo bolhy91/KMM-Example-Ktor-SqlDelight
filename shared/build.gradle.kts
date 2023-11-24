@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.Packaging
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
@@ -54,5 +56,11 @@ android {
     compileSdk = 34
     defaultConfig {
         minSdk = 25
+    }
+}
+
+sqldelight {
+    database("AppDatabase") {
+        packageName = "xyz.bolhy91.example.ktor.sql.shared.cache"
     }
 }
