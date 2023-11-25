@@ -1,12 +1,13 @@
-CREATE TABLE Launch(
-flightNumber INTEGER NOT NULL,
+CREATE TABLE Launch (
+    flightNumber INTEGER NOT NULL,
     missionName TEXT NOT NULL,
     details TEXT,
-    launchSuccess INTEGER DEFAULT NULL,
+    launchSuccess INTEGER AS Boolean DEFAULT NULL,
     launchDateUTC TEXT NOT NULL,
     patchUrlSmall TEXT,
     patchUrlLarge TEXT,
-    articleUrl TEXT);
+    articleUrl TEXT
+);
 
 insertLaunch:
 INSERT INTO Launch(flightNumber, missionName, details, launchSuccess, launchDateUTC, patchUrlSmall, patchUrlLarge, articleUrl)
@@ -16,4 +17,5 @@ removeAllLaunches:
 DELETE FROM Launch;
 
 selectAllLaunchesInfo:
-SELECT Launch.* FROM Launch;
+SELECT Launch.*
+FROM Launch;
