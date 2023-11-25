@@ -1,40 +1,65 @@
 package xyz.bolhy91.example.ktor.sql.android
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import xyz.bolhy91.example.ktor.sql.Greeting
+import android.view.View
+import android.widget.FrameLayout
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import xyz.bolhy91.example.ktor.sql.SpaceXSDK
+import xyz.bolhy91.example.ktor.sql.cache.DatabaseDriverFactory
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
+
+    private val mainScope = MainScope()
+
+    private lateinit var launchesRecyclerView: RecyclerView
+    private lateinit var progressBarView: FrameLayout
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+
+    private val launchesRvAdapter = LaunchesRvAdapter(listOf())
+
+    private val sdk = SpaceXSDK(DatabaseDriverFactory(this))
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            MyApplicationTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    GreetingView(Greeting().greet())
-                }
-            }
+
+        title = "SpaceX Launches"
+        setContentView(R.layout.activity_main)
+        launchesRecyclerView = findViewById(R.id.launchesListRv)
+        progressBarView = findViewById(R.id.progressBar)
+        swipeRefreshLayout = findViewById(R.id.swipeContainer)
+
+        launchesRecyclerView.adapter = launchesRvAdapter
+        launchesRecyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
+
+        swipeRefreshLayout.setOnRefreshListener {
+            swipeRefreshLayout.isRefreshing = false
+            displayLaunches(true)
         }
+        displayLaunches(false)
     }
-}
 
-@Composable
-fun GreetingView(text: String) {
-    Text(text = text)
-}
+    override fun onDestroy() {
+        super.onDestroy()
+        mainScope.cancel()
+    }
 
-@Preview
-@Composable
-fun DefaultPreview() {
-    MyApplicationTheme {
-        GreetingView("Hello, Android!")
+    private fun displayLaunches(needReload: Boolean) {
+        progressBarView.visibility = View.VISIBLE
+        mainScope.launch {
+            kotlin.runCatching {
+                sdk.getAllLaunches(needReload)
+            }.onSuccess {
+                launchesRvAdapter.launches = it
+                launchesRvAdapter.notifyDataSetChanged()
+            }.onFailure {
+                Toast.makeText(this@MainActivity, it.localizedMessage, Toast.LENGTH_SHORT).show()
+            }
+            progressBarView.visibility = View.GONE
+        }
     }
 }
